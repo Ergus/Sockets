@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2019  Jimmy Aguilar Mena
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -11,81 +28,80 @@
 
 int OpenConnection(const char *hostname, int port)
 {
-        int sd;
-        struct hostent *host;
-        struct sockaddr_in addr;
-        if ( (host = gethostbyname(hostname)) == NULL )
-        {
+	int sd;
+	struct hostent *host;
+	struct sockaddr_in addr;
+	if ( (host = gethostbyname(hostname)) == NULL ) {
 		perror(hostname);
 		abort();
-        }
-        sd = socket(PF_INET, SOCK_STREAM, 0);
-        bzero(&addr, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
-        addr.sin_addr.s_addr = *(long*)(host->h_addr);
-        if ( connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ) {
+	}
+	sd = socket(PF_INET, SOCK_STREAM, 0);
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
+	addr.sin_addr.s_addr = *(long*)(host->h_addr);
+	if ( connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ) {
 		close(sd);
 		perror(hostname);
 		abort();
-        }
-        return sd;
+	}
+	return sd;
 }
 SSL_CTX* InitCTX(void)
 {
-        OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
-        SSL_load_error_strings();      /* Bring and register error messages */
-        const SSL_METHOD *method
+	OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
+	SSL_load_error_strings();      /* Bring and register error messages */
+	const SSL_METHOD *method
 		= TLS_client_method(); /* Create new client-method instance */
 	SSL_CTX *ctx
 		= SSL_CTX_new(method); /* Create new context */
-        if (!ctx) {
+	if (!ctx) {
 		ERR_print_errors_fp(stderr);
 		abort();
-        }
-        return ctx;
+	}
+	return ctx;
 }
 void ShowCerts(SSL* ssl)
 {
 	/* get the server's certificate */
-        X509 *cert = SSL_get_peer_certificate(ssl); 
-        char *line;
-        if ( cert != NULL ) {
+	X509 *cert = SSL_get_peer_certificate(ssl);
+	char *line;
+	if ( cert != NULL ) {
 		printf("Server certificates:\n");
 		line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
 		printf("Subject: %s\n", line);
-		free(line);       /* free the malloc'ed string */
+		free(line);          /* free the malloc'ed string */
 		line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
 		printf("Issuer: %s\n", line);
-		free(line);       /* free the malloc'ed string */
+		free(line);          /* free the malloc'ed string */
 		X509_free(cert);     /* free the malloc'ed certificate copy */
-        } else
+	} else
 		printf("Info: No client certificates configured.\n");
 }
 
 int main(int count, char *strings[])
 {
-        SSL_CTX *ctx;
-        int server;
-        SSL *ssl;
-        char buf[1024];
-        char acClientRequest[1024] = {0};
-        int bytes;
-        char *hostname, *portnum;
-        if ( count != 3 ) {
+	SSL_CTX *ctx;
+	int server;
+	SSL *ssl;
+	char buf[1024];
+	char acClientRequest[1024] = {0};
+	int bytes;
+	char *hostname, *portnum;
+	if ( count != 3 ) {
 		printf("usage: %s <hostname> <portnum>\n", strings[0]);
-		exit(0);
-        }
-        SSL_library_init();
-        hostname=strings[1];
-        portnum=strings[2];
-        ctx = InitCTX();
-        server = OpenConnection(hostname, atoi(portnum));
-        ssl = SSL_new(ctx);      /* create new SSL connection state */
-        SSL_set_fd(ssl, server);    /* attach the socket descriptor */
-        if ( SSL_connect(ssl) == -1 )   /* perform the connection */
+		exit(EXIT_FAILURE);
+	}
+	SSL_library_init();
+	hostname=strings[1];
+	portnum=strings[2];
+	ctx = InitCTX();
+	server = OpenConnection(hostname, atoi(portnum));
+	ssl = SSL_new(ctx);            /* create new SSL connection state */
+	SSL_set_fd(ssl, server);       /* attach the socket descriptor */
+	if ( SSL_connect(ssl) == -1 )  /* perform the connection */
 		ERR_print_errors_fp(stderr);
-        else {
+	else {
 		char acUsername[16] = {0};
 		char acPassword[16] = {0};
 		const char *cpRequestMessage =
@@ -107,8 +123,8 @@ int main(int count, char *strings[])
 		buf[bytes] = 0;
 		printf("Received: \"%s\"\n", buf);
 		SSL_free(ssl);        /* release connection state */
-        }
-        close(server);         /* close socket */
-        SSL_CTX_free(ctx);        /* release context */
-        return 0;
+	}
+	close(server);                /* close socket */
+	SSL_CTX_free(ctx);            /* release context */
+	return 0;
 }
