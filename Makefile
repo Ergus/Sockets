@@ -24,6 +24,9 @@ client2.x: client2.c
 server2.x: server2.c
 	gcc -Wall $^ -L/usr/lib -lssl -lcrypto -o $@
 
+mycert.pem:
+	openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout $@ -out $@
+
 .PHONY: clean
 
 clean:
