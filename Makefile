@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-all: client.x server.x client2.x server2.x
+all: client.x server.x client2.x server2.x mycert.pem
 
 client.x: client.c
 	gcc $^ -o $@
