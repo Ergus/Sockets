@@ -40,16 +40,8 @@ int main(int argc,char *argv[])
 		"Content-Type: application/x-www-form-urlencoded\r\n"
 		"Content-Length: 25\r\n"
 		"\r\n"
-		"uname=jimmy&password=1234"
+		"uname=jimmy&password=1234\r\n"
 		;
-		//"Content-Type: application/json"
-		//"{uname: \"jimmy\", password: \"text\"}"
-
-		/* "POST / HTTP/1.0\r\n" */
-		/* "Content-Type: text/plain\r\n" */
-		/* "Content-Length: 12\r\n" */
-		/* "\r\n" */
-		/* "query_string"; */
 
 	char msgrecv[BUFFSIZE] = {0};
 
